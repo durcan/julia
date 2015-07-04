@@ -201,7 +201,7 @@ end
 
 doc(f, ::Method) = doc(f)
 
-# Modules
+# Modules
 
 function doc(m::Module)
     md = invoke(doc, Tuple{Any}, m)
@@ -283,6 +283,7 @@ end
 fexpr(ex) = isexpr(ex, :function, :(=)) && isexpr(ex.args[1], :call)
 
 function docm(meta, def)
+    def = macroexpand(def)
     def′ = unblock(def)
     isexpr(def′, :macro) && return namedoc(meta, def, symbol("@", namify(def′)))
     isexpr(def′, :type) && return typedoc(meta, def, namify(def′.args[2]))
@@ -290,6 +291,7 @@ function docm(meta, def)
     isexpr(def′, :abstract) && return namedoc(meta, def, namify(def′))
     isexpr(def′, :module) && return namedoc(meta, def, def′.args[2])
     fexpr(def′) && return funcdoc(meta, def)
+    isa(def′, AbstractString) && (def′ = parse(def′))
     isexpr(def′, :macrocall) && (def = namify(def′))
     return objdoc(meta, def)
 end
@@ -365,7 +367,7 @@ documented, as opposed to the whole function. Method docs are
 concatenated together in the order they were defined to provide docs
 for the function.
 """
-@doc
+"Base.DocBootstrap.@doc"
 
 "`doc(obj)`: Get the doc metadata for `obj`."
 doc
