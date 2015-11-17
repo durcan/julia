@@ -465,7 +465,7 @@ if DoFullTest
     script = joinpath(dirname(@__FILE__), "topology.jl")
     cmd = `$(joinpath(JULIA_HOME,Base.julia_exename())) $script`
 
-    (strm, proc) = open(cmd)
+    (strm, proc) = open(pipeline(cmd, stderr=STDERR))
     wait(proc)
     if !success(proc) && ccall(:jl_running_on_valgrind,Cint,()) == 0
         println(readall(strm))
@@ -574,7 +574,12 @@ function f13168(n)
     val
 end
 let t = schedule(@task f13168(100))
-    @test schedule(t) === t
+    @test t.state == :queued
+    @test_throws ErrorException schedule(t)
+    yield()
+    @test t.state == :done
+    @test_throws ErrorException schedule(t)
+    @test isa(wait(t),Float64)
 end
 
 # issue #13122
